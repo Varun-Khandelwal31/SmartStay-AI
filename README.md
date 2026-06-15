@@ -1,6 +1,6 @@
 # SmartStay-AI
 
-Week 2 frontend skeleton built with React, Tailwind CSS, and React Router.
+Frontend built with React, Tailwind CSS, and React Router.
 
 ## Getting Started
 
