@@ -3,11 +3,13 @@ import Footer from '../components/Footer.jsx'
 
 function About() {
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-white dark:bg-slate-900">
       <Navbar />
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">About</h1>
-        <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-10 md:py-12 lg:px-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
+          About
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:mt-4 sm:text-base lg:text-lg">
           SmartStay AI is building intelligent tools for the hospitality industry.
           This page is a placeholder for company background, mission, and team
           information that will be added in future iterations.

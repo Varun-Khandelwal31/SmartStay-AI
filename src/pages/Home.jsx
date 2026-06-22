@@ -26,21 +26,21 @@ const features = [
 
 function Home() {
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-slate-50">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-slate-50 dark:bg-slate-950">
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <section className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+        <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:py-12 lg:px-8">
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white sm:text-2xl lg:text-3xl">
               Why SmartStay AI
             </h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
+            <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400 sm:text-base">
               Explore the core capabilities that power smarter hospitality
               experiences for guests and hotel teams alike.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {features.map((feature) => (
               <Card
                 key={feature.title}
