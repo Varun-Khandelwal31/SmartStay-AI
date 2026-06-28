@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Loader, Toast, Button, Input } from '../components/ui'
 
-const API_BASE = 'http://localhost:5000/api'
+const API_BASE = 'http://localhost:5001/api'
 
 // Sentiment badge colours
 const sentimentStyles = {
