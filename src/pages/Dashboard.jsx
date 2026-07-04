@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Loader, Toast, Button, Input, Modal } from '../components/ui'
 
-const API_BASE = 'http://localhost:5001/api'
+const API_BASE = '/api'
 
 const EMPTY_FORM = {
   guestName: '',
