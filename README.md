@@ -1,6 +1,6 @@
 # SmartStay AI
 
-Intelligent hospitality management platform built with React, Tailwind CSS, and a Node.js/Express backend.
+Intelligent hospitality management platform built with React, Tailwind CSS, and a Node.js/Express + MongoDB backend.
 
 ---
 
@@ -8,21 +8,24 @@ Intelligent hospitality management platform built with React, Tailwind CSS, and 
 
 ```
 SmartStay-AI/
-├── backend/                  # Express REST API (Week 4)
+├── backend/                        # Express REST API
 │   ├── controllers/
-│   │   └── reviewController.js
+│   │   └── reviewController.js     # Async CRUD handlers (Mongoose)
 │   ├── data/
-│   │   └── reviews.js        # In-memory data store
+│   │   └── reviews.js              # Legacy seed data (Week 4 reference only)
 │   ├── middleware/
-│   │   └── errorHandler.js   # Centralized error handling
+│   │   └── errorHandler.js         # Centralized 404 / 500 handling
+│   ├── models/
+│   │   └── Review.js               # Mongoose schema & model (Week 5)
 │   ├── routes/
-│   │   └── reviews.js
-│   ├── .env.example
+│   │   └── reviews.js              # All 6 API routes
+│   ├── .env                        # Local environment variables (git-ignored)
+│   ├── .env.example                # Placeholder template
 │   ├── package.json
-│   └── server.js
-├── src/                      # React frontend
+│   └── server.js                   # Express app + MongoDB connection
+├── src/                            # React frontend
 │   ├── components/
-│   │   ├── ui/               # Button, Input, Modal, Toast, Loader
+│   │   ├── ui/                     # Button, Input, Modal, Toast, Loader
 │   │   ├── Card.jsx
 │   │   ├── Footer.jsx
 │   │   ├── Hero.jsx
@@ -31,7 +34,7 @@ SmartStay-AI/
 │   │   └── ThemeContext.jsx
 │   ├── pages/
 │   │   ├── About.jsx
-│   │   ├── Dashboard.jsx     # Live API data (Week 4)
+│   │   ├── Dashboard.jsx           # Fetches live API data
 │   │   ├── Home.jsx
 │   │   ├── Login.jsx
 │   │   └── Showcase.jsx
@@ -47,7 +50,7 @@ SmartStay-AI/
 
 ## Getting Started
 
-### Frontend
+### 1. Frontend
 
 ```bash
 # From the project root
@@ -57,19 +60,51 @@ npm run dev
 
 Runs at: http://localhost:5173
 
-### Backend
+---
+
+### 2. Backend
+
+#### Prerequisites
+- Node.js v18+
+- A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account with a cluster created
+
+#### Setup
 
 ```bash
 cd backend
 
-# Copy environment file and edit if needed
+# Copy the environment template
 cp .env.example .env
+```
 
+Edit `backend/.env` and fill in your values:
+
+```env
+PORT=5001
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+NODE_ENV=development
+```
+
+#### MongoDB Atlas Steps
+1. Sign in at https://cloud.mongodb.com
+2. Create a free cluster (M0)
+3. Go to **Database Access** → add a database user with read/write permissions
+4. Go to **Network Access** → allow your IP (or `0.0.0.0/0` for dev)
+5. Go to **Clusters** → **Connect** → **Connect your application** → copy the connection string
+6. Replace `<username>`, `<password>`, `<cluster>`, and `<dbname>` in your `.env`
+
+#### Run the backend
+
+```bash
 npm install
 npm run dev
 ```
 
-Runs at: http://localhost:5000
+On successful start you will see:
+```
+MongoDB connected successfully
+SmartStay AI backend running at http://localhost:5001
+```
 
 > Both servers must be running for the Dashboard to display live review data.
 
@@ -77,22 +112,22 @@ Runs at: http://localhost:5000
 
 ## API Endpoints
 
-Base URL: `http://localhost:5000`
+Base URL: `http://localhost:5001`
 
-| Method | Endpoint                      | Description                          | Status |
-|--------|-------------------------------|--------------------------------------|--------|
-| GET    | `/api/reviews`                | Return all reviews                   | 200    |
-| GET    | `/api/reviews/:id`            | Return a single review by id         | 200    |
-| POST   | `/api/reviews`                | Create a new review                  | 201    |
-| PUT    | `/api/reviews/:id`            | Update an existing review            | 200    |
-| DELETE | `/api/reviews/:id`            | Delete a review                      | 204    |
-| GET    | `/api/reviews/search?q=`      | Search by guest name, hotel, or text | 200    |
+| # | Method | Endpoint                   | Description                                    | Status |
+|---|--------|----------------------------|------------------------------------------------|--------|
+| 1 | GET    | `/api/reviews`             | Return all reviews                             | 200    |
+| 2 | GET    | `/api/reviews/:id`         | Return a single review by ID                   | 200    |
+| 3 | POST   | `/api/reviews`             | Create a new review                            | 201    |
+| 4 | PUT    | `/api/reviews/:id`         | Update an existing review by ID                | 200    |
+| 5 | DELETE | `/api/reviews/:id`         | Delete a review by ID                          | 204    |
+| 6 | GET    | `/api/reviews/search?q=`   | Search by guest name, hotel, or review text    | 200    |
 
 ### Review Shape
 
 ```json
 {
-  "id": "string",
+  "id": "string (MongoDB ObjectId)",
   "guestName": "string",
   "hotel": "string",
   "rating": 1,
@@ -108,30 +143,30 @@ Base URL: `http://localhost:5000`
 { "success": false, "error": "Descriptive error message." }
 ```
 
-| Status | Meaning           |
-|--------|-------------------|
-| 400    | Validation error  |
-| 404    | Not found         |
-| 500    | Server error      |
+| Status | Meaning          |
+|--------|------------------|
+| 400    | Validation error |
+| 404    | Not found        |
+| 500    | Server error     |
 
 ---
 
 ## Tech Stack
 
-| Layer    | Technology                  |
-|----------|-----------------------------|
-| Frontend | React 19, Tailwind CSS 4    |
-| Routing  | React Router DOM 7          |
-| Build    | Vite 8                      |
-| Backend  | Node.js, Express 4          |
-| CORS     | cors                        |
-| Config   | dotenv                      |
-| Dev      | nodemon                     |
+| Layer     | Technology                    |
+|-----------|-------------------------------|
+| Frontend  | React 19, Tailwind CSS 4      |
+| Routing   | React Router DOM 7            |
+| Build     | Vite 8                        |
+| Backend   | Node.js, Express 4            |
+| Database  | MongoDB Atlas + Mongoose 8    |
+| CORS      | cors                          |
+| Config    | dotenv                        |
+| Dev       | nodemon                       |
 
 ---
 
-## Notes
+## Week Notes
 
-- The backend uses an **in-memory array** — data resets on server restart. No database is used.
-- Dark/Light mode is persisted in `localStorage`.
-- The Dashboard fetches live data from the backend and shows the `Loader` component while loading and `Toast` on errors.
+- **Week 4** — In-memory array, full CRUD REST API, frontend connected to live API
+- **Week 5** — Replaced in-memory array with MongoDB Atlas. All API routes, response formats, and frontend UI remain unchanged. Data now persists across server restarts.

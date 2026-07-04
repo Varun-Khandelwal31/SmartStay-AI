@@ -1,11 +1,7 @@
-const reviews = require('../data/reviews')
+const Review = require('../models/Review')
 
-// Utility: generate a simple unique id
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2)
-}
-
-// Utility: validate required fields on a review body
+// ─── Validation helper ────────────────────────────────────────────────────────
+// Kept identical to Week 4 so error messages are unchanged.
 function validateReviewBody(body) {
   const { guestName, hotel, rating, review, sentiment } = body
   const errors = []
@@ -35,126 +31,170 @@ function validateReviewBody(body) {
   return errors
 }
 
+// ─── Controllers ─────────────────────────────────────────────────────────────
+
 /**
  * GET /api/reviews
- * Returns all reviews.
+ * Returns all reviews sorted by date descending.
  */
-function getAllReviews(req, res) {
-  res.status(200).json({ success: true, count: reviews.length, data: reviews })
+async function getAllReviews(req, res, next) {
+  try {
+    const reviews = await Review.find().sort({ date: -1 })
+    res.status(200).json({ success: true, count: reviews.length, data: reviews })
+  } catch (err) {
+    next(err)
+  }
 }
 
 /**
  * GET /api/reviews/search?q=
  * Search reviews by guestName, hotel, or review text (case-insensitive).
  */
-function searchReviews(req, res) {
-  const q = (req.query.q || '').trim().toLowerCase()
-  if (!q) {
-    return res.status(400).json({
-      success: false,
-      error: 'Query parameter "q" is required for search.',
-    })
+async function searchReviews(req, res, next) {
+  try {
+    const q = (req.query.q || '').trim()
+    if (!q) {
+      return res.status(400).json({
+        success: false,
+        error: 'Query parameter "q" is required for search.',
+      })
+    }
+
+    const regex = new RegExp(q, 'i') // case-insensitive
+    const results = await Review.find({
+      $or: [{ guestName: regex }, { hotel: regex }, { review: regex }],
+    }).sort({ date: -1 })
+
+    res.status(200).json({ success: true, count: results.length, data: results })
+  } catch (err) {
+    next(err)
   }
-
-  const results = reviews.filter(
-    (r) =>
-      r.guestName.toLowerCase().includes(q) ||
-      r.hotel.toLowerCase().includes(q) ||
-      r.review.toLowerCase().includes(q),
-  )
-
-  res.status(200).json({ success: true, count: results.length, data: results })
 }
 
 /**
  * GET /api/reviews/:id
- * Returns a single review by id.
+ * Returns a single review by its MongoDB _id.
  */
-function getReviewById(req, res) {
-  const review = reviews.find((r) => r.id === req.params.id)
-  if (!review) {
-    return res.status(404).json({
-      success: false,
-      error: `Review with id "${req.params.id}" not found.`,
-    })
+async function getReviewById(req, res, next) {
+  try {
+    const review = await Review.findById(req.params.id)
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        error: `Review with id "${req.params.id}" not found.`,
+      })
+    }
+    res.status(200).json({ success: true, data: review })
+  } catch (err) {
+    // Mongoose CastError = invalid ObjectId format → treat as 404
+    if (err.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: `Review with id "${req.params.id}" not found.`,
+      })
+    }
+    next(err)
   }
-  res.status(200).json({ success: true, data: review })
 }
 
 /**
  * POST /api/reviews
- * Creates a new review.
+ * Creates a new review and persists it to MongoDB.
  */
-function createReview(req, res) {
-  const errors = validateReviewBody(req.body)
-  if (errors.length > 0) {
-    return res.status(400).json({ success: false, error: errors.join(' ') })
+async function createReview(req, res, next) {
+  try {
+    const errors = validateReviewBody(req.body)
+    if (errors.length > 0) {
+      return res.status(400).json({ success: false, error: errors.join(' ') })
+    }
+
+    const { guestName, hotel, rating, review, sentiment, date } = req.body
+
+    const newReview = await Review.create({
+      guestName: guestName.trim(),
+      hotel: hotel.trim(),
+      rating: Number(rating),
+      review: review.trim(),
+      sentiment: sentiment || 'neutral',
+      date: date ? new Date(date) : new Date(),
+    })
+
+    res.status(201).json({ success: true, data: newReview })
+  } catch (err) {
+    next(err)
   }
-
-  const { guestName, hotel, rating, review, sentiment, date } = req.body
-
-  const newReview = {
-    id: generateId(),
-    guestName: guestName.trim(),
-    hotel: hotel.trim(),
-    rating: Number(rating),
-    review: review.trim(),
-    sentiment: sentiment || 'neutral',
-    date: date || new Date().toISOString(),
-  }
-
-  reviews.push(newReview)
-  res.status(201).json({ success: true, data: newReview })
 }
 
 /**
  * PUT /api/reviews/:id
- * Updates an existing review by id.
+ * Updates an existing review by its MongoDB _id.
  */
-function updateReview(req, res) {
-  const index = reviews.findIndex((r) => r.id === req.params.id)
-  if (index === -1) {
-    return res.status(404).json({
-      success: false,
-      error: `Review with id "${req.params.id}" not found.`,
-    })
+async function updateReview(req, res, next) {
+  try {
+    const errors = validateReviewBody(req.body)
+    if (errors.length > 0) {
+      return res.status(400).json({ success: false, error: errors.join(' ') })
+    }
+
+    const { guestName, hotel, rating, review, sentiment, date } = req.body
+
+    const updated = await Review.findByIdAndUpdate(
+      req.params.id,
+      {
+        guestName: guestName.trim(),
+        hotel: hotel.trim(),
+        rating: Number(rating),
+        review: review.trim(),
+        sentiment: sentiment || 'neutral',
+        ...(date && { date: new Date(date) }),
+      },
+      { new: true, runValidators: true },
+    )
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        error: `Review with id "${req.params.id}" not found.`,
+      })
+    }
+
+    res.status(200).json({ success: true, data: updated })
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: `Review with id "${req.params.id}" not found.`,
+      })
+    }
+    next(err)
   }
-
-  const errors = validateReviewBody(req.body)
-  if (errors.length > 0) {
-    return res.status(400).json({ success: false, error: errors.join(' ') })
-  }
-
-  const { guestName, hotel, rating, review, sentiment, date } = req.body
-
-  reviews[index] = {
-    ...reviews[index],
-    guestName: guestName.trim(),
-    hotel: hotel.trim(),
-    rating: Number(rating),
-    review: review.trim(),
-    sentiment: sentiment || reviews[index].sentiment,
-    date: date || reviews[index].date,
-  }
-
-  res.status(200).json({ success: true, data: reviews[index] })
 }
 
 /**
  * DELETE /api/reviews/:id
- * Deletes a review by id.
+ * Deletes a review by its MongoDB _id.
  */
-function deleteReview(req, res) {
-  const index = reviews.findIndex((r) => r.id === req.params.id)
-  if (index === -1) {
-    return res.status(404).json({
-      success: false,
-      error: `Review with id "${req.params.id}" not found.`,
-    })
-  }
+async function deleteReview(req, res, next) {
+  try {
+    const deleted = await Review.findByIdAndDelete(req.params.id)
 
-  reviews.splice(index, 1)
-  res.status(204).send()
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        error: `Review with id "${req.params.id}" not found.`,
+      })
+    }
+
+    res.status(204).send()
+  } catch (err) {
+    if (err.name === 'CastError') {
+      return res.status(404).json({
+        success: false,
+        error: `Review with id "${req.params.id}" not found.`,
+      })
+    }
+    next(err)
+  }
 }
 
 module.exports = {
