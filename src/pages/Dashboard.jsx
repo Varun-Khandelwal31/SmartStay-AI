@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Loader, Toast, Button, Input, Modal } from '../components/ui'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const API_BASE = '/api'
 
@@ -132,6 +134,8 @@ function ReviewForm({ form, errors, saving, onChange, onSubmit, onCancel, isEdit
 }
 
 function Dashboard() {
+  const { token, user, logout } = useAuth()
+  const navigate = useNavigate()
   const [reviews, setReviews]         = useState([])
   const [loading, setLoading]         = useState(true)
   const [toast, setToast]             = useState({ isVisible: false, message: '', type: 'info' })
@@ -156,11 +160,18 @@ function Dashboard() {
     setTimeout(() => setToast((prev) => ({ ...prev, isVisible: false })), 4000)
   }, [])
 
+  // ─── Auth header helper ───────────────────────────────────────────────────
+  const authHeaders = useCallback(() => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  }), [token])
+
   // ─── Fetch all reviews ─────────────────────────────────────────────────────
   const fetchReviews = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/reviews`)
+      const res = await fetch(`${API_BASE}/reviews`, { headers: authHeaders() })
+      if (res.status === 401) { logout(); navigate('/login'); return }
       if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const json = await res.json()
       setReviews(json.data)
@@ -170,7 +181,7 @@ function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }, [showToast])
+  }, [showToast, authHeaders, logout, navigate])
 
   useEffect(() => { fetchReviews() }, [fetchReviews])
 
@@ -192,7 +203,8 @@ function Dashboard() {
     setIsSearching(true)
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/reviews/search?q=${encodeURIComponent(q)}`)
+      const res = await fetch(`${API_BASE}/reviews/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() })
+      if (res.status === 401) { logout(); navigate('/login'); return }
       if (!res.ok) throw new Error()
       const json = await res.json()
       setReviews(json.data)
@@ -224,9 +236,10 @@ function Dashboard() {
     try {
       const res = await fetch(`${API_BASE}/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ ...createForm, rating: Number(createForm.rating) }),
       })
+      if (res.status === 401) { logout(); navigate('/login'); return }
       if (!res.ok) throw new Error()
       const json = await res.json()
       setReviews((prev) => [json.data, ...prev])
@@ -266,9 +279,10 @@ function Dashboard() {
     try {
       const res = await fetch(`${API_BASE}/reviews/${editingReview.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ ...editForm, rating: Number(editForm.rating) }),
       })
+      if (res.status === 401) { logout(); navigate('/login'); return }
       if (!res.ok) throw new Error()
       const json = await res.json()
       setReviews((prev) => prev.map((r) => r.id === editingReview.id ? json.data : r))
@@ -284,7 +298,11 @@ function Dashboard() {
   // ─── Delete ────────────────────────────────────────────────────────────────
   async function handleDelete(id) {
     try {
-      const res = await fetch(`${API_BASE}/reviews/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/reviews/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      })
+      if (res.status === 401) { logout(); navigate('/login'); return }
       if (res.status === 204) {
         setReviews((prev) => prev.filter((r) => r.id !== id))
         showToast('Review deleted.', 'success')
@@ -305,13 +323,23 @@ function Dashboard() {
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
 
         {/* ── Page header ── */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
-            Dashboard
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
-            Overview of hotel operations, guest activity, and live review data.
-          </p>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between md:mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
+              Dashboard
+            </h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 sm:text-base">
+              {user ? `Welcome back, ${user.name}.` : 'Overview of hotel operations, guest activity, and live review data.'}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { logout(); navigate('/login') }}
+            className="shrink-0 self-start"
+          >
+            Logout
+          </Button>
         </div>
 
         {/* ── KPI stat cards ── */}

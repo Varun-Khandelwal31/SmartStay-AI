@@ -3,13 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Button, Input, Toast } from '../components/ui'
-import { useAuth } from '../context/AuthContext.jsx'
 
-function Login() {
-  const navigate  = useNavigate()
-  const { login } = useAuth()
+function Register() {
+  const navigate = useNavigate()
 
-  const [form, setForm]     = useState({ email: '', password: '' })
+  const [form, setForm]     = useState({ name: '', email: '', password: '', confirm: '' })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [toast, setToast]   = useState({ isVisible: false, message: '', type: 'info' })
@@ -21,9 +19,12 @@ function Login() {
 
   function validate() {
     const errs = {}
-    if (!form.email.trim())    errs.email    = 'Email is required.'
+    if (!form.name.trim())         errs.name     = 'Name is required.'
+    if (!form.email.trim())        errs.email    = 'Email is required.'
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Enter a valid email.'
-    if (!form.password)        errs.password = 'Password is required.'
+    if (!form.password)            errs.password = 'Password is required.'
+    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters.'
+    if (form.password !== form.confirm) errs.confirm = 'Passwords do not match.'
     return errs
   }
 
@@ -33,19 +34,19 @@ function Login() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
       })
       const json = await res.json()
       if (!res.ok) {
-        const msg = json.errors?.[0]?.msg || json.error || 'Login failed.'
+        const msg = json.errors?.[0]?.msg || json.error || 'Registration failed.'
         showToast(msg)
         return
       }
-      login(json.token, json.user)
-      navigate('/dashboard', { replace: true })
+      showToast('Account created! Redirecting to login…', 'success')
+      setTimeout(() => navigate('/login'), 1500)
     } catch {
       showToast('Network error. Is the backend running?')
     } finally {
@@ -57,6 +58,13 @@ function Login() {
     window.location.href = 'http://localhost:5001/api/auth/google'
   }
 
+  function set(field) {
+    return (e) => {
+      setForm((p) => ({ ...p, [field]: e.target.value }))
+      setErrors((p) => ({ ...p, [field]: '' }))
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-white dark:bg-slate-900">
       <Navbar />
@@ -64,10 +72,10 @@ function Login() {
       <main className="mx-auto w-full max-w-sm flex-1 px-4 py-10 sm:px-6 sm:py-14">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
-            Welcome back
+            Create an account
           </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Sign in to your SmartStay AI account.
+            Join SmartStay AI today.
           </p>
         </div>
 
@@ -77,7 +85,6 @@ function Login() {
           onClick={handleGoogleLogin}
           className="mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
-          {/* Google logo SVG */}
           <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -93,38 +100,26 @@ function Login() {
           </div>
           <div className="relative flex justify-center">
             <span className="bg-white px-3 text-xs text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-              or continue with email
+              or register with email
             </span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={form.email}
-            onChange={(e) => { setForm((p) => ({ ...p, email: e.target.value })); setErrors((p) => ({ ...p, email: '' })) }}
-            error={errors.email}
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="Enter your password"
-            value={form.password}
-            onChange={(e) => { setForm((p) => ({ ...p, password: e.target.value })); setErrors((p) => ({ ...p, password: '' })) }}
-            error={errors.password}
-          />
+          <Input label="Full Name"        type="text"     placeholder="Your name"         value={form.name}     onChange={set('name')}     error={errors.name} />
+          <Input label="Email"            type="email"    placeholder="you@example.com"   value={form.email}    onChange={set('email')}    error={errors.email} />
+          <Input label="Password"         type="password" placeholder="Min. 8 characters" value={form.password} onChange={set('password')} error={errors.password} />
+          <Input label="Confirm Password" type="password" placeholder="Repeat password"   value={form.confirm}  onChange={set('confirm')}  error={errors.confirm} />
 
           <Button type="submit" variant="primary" size="lg" disabled={loading} className="w-full">
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Creating account…' : 'Create Account'}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
-          Don&apos;t have an account?{' '}
-          <Link to="/register" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
-            Register
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+            Sign in
           </Link>
         </p>
       </main>
@@ -141,4 +136,4 @@ function Login() {
   )
 }
 
-export default Login
+export default Register

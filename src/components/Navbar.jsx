@@ -1,16 +1,30 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 
-const navLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
+const publicLinks = [
+  { to: '/',          label: 'Home' },
+  { to: '/about',     label: 'About' },
+]
+
+const protectedLinks = [
   { to: '/dashboard', label: 'Dashboard' },
-  { to: '/showcase', label: 'Showcase' },
-  { to: '/login', label: 'Login' },
+  { to: '/showcase',  label: 'Showcase' },
 ]
 
 function Navbar() {
-  const { isDark, toggleTheme } = useTheme()
+  const { isDark, toggleTheme }          = useTheme()
+  const { isAuthenticated, user, logout } = useAuth()
+  const navigate                         = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
+  const activeClass = 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+  const inactiveClass = 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+  const linkClass = 'rounded-lg px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm lg:text-base'
 
   return (
     <header className="w-full border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -24,24 +38,61 @@ function Navbar() {
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <ul className="flex flex-wrap items-center gap-0.5 sm:gap-1">
-            {navLinks.map(({ to, label }) => (
+            {/* Public links always visible */}
+            {publicLinks.map(({ to, label }) => (
               <li key={to}>
-                <NavLink
-                  to={to}
-                  className={({ isActive }) =>
-                    `rounded-lg px-2 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm lg:text-base ${
-                      isActive
-                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
-                    }`
-                  }
-                >
+                <NavLink to={to} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : inactiveClass}`}>
                   {label}
                 </NavLink>
               </li>
             ))}
+
+            {/* Protected links only when logged in */}
+            {isAuthenticated && protectedLinks.map(({ to, label }) => (
+              <li key={to}>
+                <NavLink to={to} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : inactiveClass}`}>
+                  {label}
+                </NavLink>
+              </li>
+            ))}
+
+            {/* Auth links */}
+            {isAuthenticated ? (
+              <>
+                {user && (
+                  <li>
+                    <span className={`${linkClass} text-slate-500 dark:text-slate-400`}>
+                      {user.name.split(' ')[0]}
+                    </span>
+                  </li>
+                )}
+                <li>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className={`${linkClass} ${inactiveClass}`}
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <NavLink to="/login" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : inactiveClass}`}>
+                    Login
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink to="/register" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : inactiveClass}`}>
+                    Register
+                  </NavLink>
+                </li>
+              </>
+            )}
           </ul>
 
+          {/* Theme toggle */}
           <button
             type="button"
             onClick={toggleTheme}

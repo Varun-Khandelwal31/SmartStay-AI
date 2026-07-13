@@ -3,32 +3,53 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const mongoose = require('mongoose')
+const passport = require('./config/passport')
+
+const authRoutes   = require('./routes/auth')
 const reviewRoutes = require('./routes/reviews')
 const { notFound, errorHandler } = require('./middleware/errorHandler')
 
-const app = express()
+const app  = express()
 const PORT = process.env.PORT || 5001
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors())
+// ─── CORS ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL || 'http://localhost:5173',
+]
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, Postman) in development
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+      callback(new Error('CORS: origin not allowed'))
+    },
+    credentials: true,
+  }),
+)
+
+// ─── Body parsing ─────────────────────────────────────────────────────────────
 app.use(express.json())
+
+// ─── Passport (no sessions — JWT only) ───────────────────────────────────────
+app.use(passport.initialize())
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'SmartStay AI API is running',
-    version: '2.0.0',
+    version: '3.0.0',
   })
 })
 
+app.use('/api/auth',    authRoutes)
 app.use('/api/reviews', reviewRoutes)
 
 // ─── Error Handling ───────────────────────────────────────────────────────────
 app.use(notFound)
 app.use(errorHandler)
 
-// ─── Connect to MongoDB then start server ────────────────────────────────────
+// ─── Connect to MongoDB then start ───────────────────────────────────────────
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
