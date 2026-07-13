@@ -15,12 +15,15 @@ const PORT = process.env.PORT || 5001
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
+  'http://localhost:5173',
+  'http://localhost:5174',
 ]
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (curl, Postman) in development
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+      // Allow requests with no origin (Vite proxy, curl, Postman)
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
       callback(new Error('CORS: origin not allowed'))
     },
     credentials: true,
