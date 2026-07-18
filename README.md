@@ -10,6 +10,7 @@ Intelligent hospitality management platform built with React, Tailwind CSS, and 
 SmartStay-AI/
 ├── backend/                        # Express REST API
 │   ├── controllers/
+│   │   ├── aiController.js         # AI Review Analyzer handler
 │   │   └── reviewController.js     # Async CRUD handlers (Mongoose)
 │   ├── data/
 │   │   └── reviews.js              # Legacy seed data (Week 4 reference only)
@@ -18,6 +19,7 @@ SmartStay-AI/
 │   ├── models/
 │   │   └── Review.js               # Mongoose schema & model (Week 5)
 │   ├── routes/
+│   │   ├── ai.js                   # AI feature routes
 │   │   └── reviews.js              # All 6 API routes
 │   ├── .env                        # Local environment variables (git-ignored)
 │   ├── .env.example                # Placeholder template
@@ -82,8 +84,22 @@ Edit `backend/.env` and fill in your values:
 ```env
 PORT=5001
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+JWT_SECRET=your_jwt_secret_min_32_characters
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+CLIENT_URL=http://localhost:5173
 NODE_ENV=development
+GEMINI_API_KEY=your_gemini_api_key
 ```
+
+### 3. Obtaining a Google Gemini API Key
+To run the AI Review Analyzer:
+1. Go to the [Google AI Studio](https://aistudio.google.com/).
+2. Sign in with your Google account.
+3. Click on **Get API Key** in the top navigation panel.
+4. Select **Create API Key** and choose a project to associate it with (or create a new one).
+5. Copy the generated API key.
+6. Add it to your `backend/.env` file as `GEMINI_API_KEY=your_actual_api_key`.
 
 #### MongoDB Atlas Steps
 1. Sign in at https://cloud.mongodb.com
@@ -122,6 +138,7 @@ Base URL: `http://localhost:5001`
 | 4 | PUT    | `/api/reviews/:id`         | Update an existing review by ID                | 200    |
 | 5 | DELETE | `/api/reviews/:id`         | Delete a review by ID                          | 204    |
 | 6 | GET    | `/api/reviews/search?q=`   | Search by guest name, hotel, or review text    | 200    |
+| 7 | POST   | `/api/ai/analyze-review`   | Analyze review with Google Gemini API          | 200    |
 
 ### Review Shape
 
@@ -166,7 +183,22 @@ Base URL: `http://localhost:5001`
 
 ---
 
+## AI Review Analyzer Feature
+The AI Review Analyzer is integrated to help hotel managers process guest feedback efficiently:
+1. **Request Flow**: Authenticated managers input guest review text in the `/ai-review` dashboard page.
+2. **API Delegation**: The React frontend sends a secure request containing the review to the Express backend. The backend loads the `GEMINI_API_KEY` environment variable and issues a request to the Google Gemini API (`gemini-1.5-flash`).
+3. **Structured Response**: The backend instructs Gemini to structure the response under a strict JSON schema.
+4. **Interactive Output**: The frontend parses the resulting JSON and renders:
+   - **Sentiment Tag**: Positive, Neutral, or Negative (color-coded).
+   - **Priority Status**: Low, Medium, or High. High priority highlights safety concerns or severe service complaints.
+   - **Summary**: A concise 2-3 sentence overview.
+   - **Key Issues**: Specific problems mapped out as badges.
+   - **Suggested response**: A polished, ready-to-copy professional management response.
+
+---
+
 ## Week Notes
 
 - **Week 4** — In-memory array, full CRUD REST API, frontend connected to live API
 - **Week 5** — Replaced in-memory array with MongoDB Atlas. All API routes, response formats, and frontend UI remain unchanged. Data now persists across server restarts.
+- **Week 7** — Integrated Google Gemini API to analyze guest reviews and generate structured JSON responses. Added the protected frontend `/ai-review` page with responsive cards, loading feedback, and copy-to-clipboard actions.

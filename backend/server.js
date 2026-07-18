@@ -7,6 +7,7 @@ const passport = require('./config/passport')
 
 const authRoutes   = require('./routes/auth')
 const reviewRoutes = require('./routes/reviews')
+const aiRoutes     = require('./routes/ai')
 const { notFound, errorHandler } = require('./middleware/errorHandler')
 
 const app  = express()
@@ -32,6 +33,8 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth',    authRoutes)
 app.use('/api/reviews', reviewRoutes)
+app.use('/api/ai',      aiRoutes)
+
 
 // ─── Error Handling ───────────────────────────────────────────────────────────
 app.use(notFound)

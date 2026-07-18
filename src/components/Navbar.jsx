@@ -10,7 +10,9 @@ const publicLinks = [
 const protectedLinks = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/showcase',  label: 'Showcase' },
+  { to: '/ai-review', label: 'AI Analyzer' },
 ]
+
 
 function Navbar() {
   const { isDark, toggleTheme }          = useTheme()

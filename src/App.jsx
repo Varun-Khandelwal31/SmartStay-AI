@@ -6,6 +6,7 @@ import Login        from './pages/Login.jsx'
 import Register     from './pages/Register.jsx'
 import Showcase     from './pages/Showcase.jsx'
 import AuthCallback from './pages/AuthCallback.jsx'
+import AIReview     from './pages/AIReview.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 function App() {
@@ -21,8 +22,10 @@ function App() {
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/showcase"  element={<ProtectedRoute><Showcase /></ProtectedRoute>} />
+      <Route path="/ai-review" element={<ProtectedRoute><AIReview /></ProtectedRoute>} />
     </Routes>
   )
 }
+
 
 export default App
