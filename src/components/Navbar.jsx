@@ -33,9 +33,14 @@ function Navbar() {
       <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4 lg:px-8">
         <Link
           to="/"
-          className="text-base font-bold tracking-tight text-slate-900 dark:text-white sm:text-lg lg:text-xl"
+          className="flex items-center gap-2 text-base font-bold tracking-tight text-slate-900 dark:text-white sm:text-lg lg:text-xl"
         >
-          SmartStay<span className="text-indigo-600 dark:text-indigo-400">AI</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-amber-500 text-white shadow-md shadow-indigo-500/20">
+            🏡
+          </span>
+          <span>
+            SmartStay<span className="text-indigo-600 dark:text-indigo-400">AI</span>
+          </span>
         </Link>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
