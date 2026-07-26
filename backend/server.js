@@ -19,7 +19,7 @@ app.set('trust proxy', 1)
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
-  .map((o) => o.trim())
+  .map((o) => o.trim().replace(/\/$/, ''))
   .filter(Boolean)
 
 app.use(
@@ -27,9 +27,16 @@ app.use(
     origin: (origin, callback) => {
       // Allow requests with no origin (server-to-server, Postman, curl)
       if (!origin) return callback(null, true)
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return callback(null, true)
-      // In development fall through to allow all
-      if (process.env.NODE_ENV !== 'production') return callback(null, true)
+      const cleanOrigin = origin.replace(/\/$/, '')
+
+      if (
+        allowedOrigins.includes(cleanOrigin) ||
+        allowedOrigins.includes('*') ||
+        cleanOrigin.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
+        return callback(null, true)
+      }
       callback(new Error(`CORS: ${origin} not allowed`))
     },
     credentials: true,
