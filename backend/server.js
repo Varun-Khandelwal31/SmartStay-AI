@@ -13,6 +13,9 @@ const { notFound, errorHandler } = require('./middleware/errorHandler')
 const app  = express()
 const PORT = process.env.PORT || 5001
 
+// Trust reverse proxy (Render / load balancer) for HTTPS redirect URIs
+app.set('trust proxy', 1)
+
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
