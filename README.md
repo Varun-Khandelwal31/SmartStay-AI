@@ -1,204 +1,276 @@
-# SmartStay AI
+# SmartStay AI — Intelligent Hotel Guest Review & Operations Platform
 
-Intelligent hospitality management platform built with React, Tailwind CSS, and a Node.js/Express + MongoDB backend.
+SmartStay AI is a full-stack, AI-powered hotel review analysis and management platform designed to help hospitality teams process guest feedback in real time, extract actionable sentiment and operational insights, and draft professional responses automatically using Google Gemini AI.
 
 ---
 
-## Project Structure
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Folder Structure](#folder-structure)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Frontend Setup](#frontend-setup)
+- [Backend Setup](#backend-setup)
+- [MongoDB Atlas Setup](#mongodb-atlas-setup)
+- [Google OAuth Setup](#google-oauth-setup)
+- [Gemini API Setup](#gemini-api-setup)
+- [Running Locally](#running-locally)
+- [Production Deployment](#production-deployment)
+- [API Endpoints](#api-endpoints)
+- [Authentication](#authentication)
+- [AI Review Analyzer](#ai-review-analyzer)
+- [Future Improvements](#future-improvements)
+
+---
+
+## Project Overview
+
+SmartStay AI bridges modern web development with generative AI to streamline hospitality operations. Hotel managers can track KPI metrics, perform complete CRUD operations on guest reviews, search and filter feedback, and utilize Google Gemini AI to analyze guest reviews instantly for sentiment classification, issue identification, priority scoring, and automated manager response generation.
+
+---
+
+## Features
+
+- **JWT & Google OAuth 2.0 Authentication**: Secure authentication with password hashing (bcryptjs) and seamless Google sign-in.
+- **Protected Routes & Persistence**: Token-based access control protecting private dashboard and AI features.
+- **AI Review Analyzer**: Google Gemini 2.5 Flash integration delivering structured JSON analysis (Sentiment, Summary, Key Issues, Priority Level, and Hotel Response Draft).
+- **Full Review CRUD**: Real-time review creation, reading, editing, deletion, and keyword search against MongoDB Atlas.
+- **Interactive Operational Dashboard**: Live stat counters, filterable review list, star rating components, and modal edit dialogs.
+- **Dark/Light Mode**: Full theme customization using Tailwind CSS and React Context.
+- **Responsive Layout**: Mobile-first design tailored for smartphone, tablet, and desktop viewports.
+
+---
+
+## Technology Stack
+
+- **Frontend**: React (Vite), React Router v6, Tailwind CSS, Lucide Icons
+- **Backend**: Node.js, Express.js, Passport.js (Google OAuth strategy), JWT, Express Validator
+- **Database**: MongoDB Atlas with Mongoose ODM
+- **AI Integration**: Google Gemini API (REST / Gemini 2.5 Flash model)
+- **Deployment**: Vercel (Frontend), Render (Backend)
+
+---
+
+## Folder Structure
 
 ```
 SmartStay-AI/
-├── backend/                        # Express REST API
+├── backend/
+│   ├── config/
+│   │   └── passport.js         # Google OAuth Passport configuration
 │   ├── controllers/
-│   │   ├── aiController.js         # AI Review Analyzer handler
-│   │   └── reviewController.js     # Async CRUD handlers (Mongoose)
-│   ├── data/
-│   │   └── reviews.js              # Legacy seed data (Week 4 reference only)
+│   │   ├── aiController.js     # Gemini API review analyzer controller
+│   │   ├── authController.js   # JWT authentication & register/login logic
+│   │   └── reviewController.js # MongoDB CRUD controllers for guest reviews
 │   ├── middleware/
-│   │   └── errorHandler.js         # Centralized 404 / 500 handling
+│   │   ├── auth.js             # JWT verification middleware
+│   │   └── errorHandler.js     # Centralized 404 & error handlers
 │   ├── models/
-│   │   └── Review.js               # Mongoose schema & model (Week 5)
+│   │   ├── Review.js           # Mongoose Review schema
+│   │   └── User.js             # Mongoose User schema
 │   ├── routes/
-│   │   ├── ai.js                   # AI feature routes
-│   │   └── reviews.js              # All 6 API routes
-│   ├── .env                        # Local environment variables (git-ignored)
-│   ├── .env.example                # Placeholder template
+│   │   ├── ai.js               # AI analysis routes
+│   │   ├── auth.js             # Auth & OAuth routes
+│   │   └── reviews.js          # Review CRUD routes
+│   ├── .env.example            # Backend environment template
 │   ├── package.json
-│   └── server.js                   # Express app + MongoDB connection
-├── src/                            # React frontend
+│   └── server.js               # Express app startup & MongoDB connection
+├── src/
 │   ├── components/
-│   │   ├── ui/                     # Button, Input, Modal, Toast, Loader
-│   │   ├── Card.jsx
+│   │   ├── ui/                 # Reusable UI primitives (Button, Modal, Toast, etc.)
 │   │   ├── Footer.jsx
-│   │   ├── Hero.jsx
-│   │   └── Navbar.jsx
+│   │   ├── Navbar.jsx
+│   │   └── ProtectedRoute.jsx
+│   ├── config/
+│   │   └── api.js              # Centralized API base URL config
 │   ├── context/
-│   │   └── ThemeContext.jsx
+│   │   ├── AuthContext.jsx     # Auth state management & token storage
+│   │   └── ThemeContext.jsx    # Dark/Light mode state management
 │   ├── pages/
-│   │   ├── About.jsx
-│   │   ├── Dashboard.jsx           # Fetches live API data
-│   │   ├── Home.jsx
-│   │   ├── Login.jsx
-│   │   └── Showcase.jsx
-│   ├── App.jsx
-│   ├── index.css
-│   └── main.jsx
-├── index.html
+│   │   ├── AIReview.jsx        # AI Review Analyzer interface
+│   │   ├── AuthCallback.jsx    # Google OAuth callback handler
+│   │   ├── Dashboard.jsx       # Reviews management & KPI dashboard
+│   │   ├── Home.jsx            # Landing page
+│   │   ├── Login.jsx           # User sign in page
+│   │   ├── Register.jsx        # User registration page
+│   │   └── Showcase.jsx       # Public showcase page
+│   ├── App.jsx                 # Route definitions
+│   └── main.jsx                # Application entrypoint
+├── .env.example                # Frontend environment template
+├── vercel.json                 # Vercel SPA route rewrite rules
 ├── package.json
-└── vite.config.js
+└── vite.config.js              # Vite build & proxy settings
 ```
 
 ---
 
-## Getting Started
+## Installation
 
-### 1. Frontend
+Clone the repository and install dependencies for both frontend and backend:
 
 ```bash
-# From the project root
+git clone https://github.com/Varun-Khandelwal31/SmartStay-AI.git
+cd SmartStay-AI
+
+# Install frontend dependencies
 npm install
-npm run dev
-```
 
-Runs at: http://localhost:5173
+# Install backend dependencies
+cd backend
+npm install
+cd ..
+```
 
 ---
 
-### 2. Backend
+## Environment Variables
 
-#### Prerequisites
-- Node.js v18+
-- A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account with a cluster created
-
-#### Setup
-
-```bash
-cd backend
-
-# Copy the environment template
-cp .env.example .env
+### Frontend (`.env`)
+```env
+VITE_API_URL=http://localhost:5001
 ```
 
-Edit `backend/.env` and fill in your values:
-
+### Backend (`backend/.env`)
 ```env
 PORT=5001
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
-JWT_SECRET=your_jwt_secret_min_32_characters
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
-GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/smartstay
+JWT_SECRET=your_jwt_secret_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 CLIENT_URL=http://localhost:5173
-NODE_ENV=development
-GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### 3. Obtaining a Google Gemini API Key
-To run the AI Review Analyzer:
-1. Go to the [Google AI Studio](https://aistudio.google.com/).
-2. Sign in with your Google account.
-3. Click on **Get API Key** in the top navigation panel.
-4. Select **Create API Key** and choose a project to associate it with (or create a new one).
-5. Copy the generated API key.
-6. Add it to your `backend/.env` file as `GEMINI_API_KEY=your_actual_api_key`.
+---
 
-#### MongoDB Atlas Steps
-1. Sign in at https://cloud.mongodb.com
-2. Create a free cluster (M0)
-3. Go to **Database Access** → add a database user with read/write permissions
-4. Go to **Network Access** → allow your IP (or `0.0.0.0/0` for dev)
-5. Go to **Clusters** → **Connect** → **Connect your application** → copy the connection string
-6. Replace `<username>`, `<password>`, `<cluster>`, and `<dbname>` in your `.env`
+## Frontend Setup
 
-#### Run the backend
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Configure `VITE_API_URL` to point to your local or deployed Express server.
+
+---
+
+## Backend Setup
+
+1. Copy `backend/.env.example` to `backend/.env`:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+2. Fill in all required environment values (`MONGO_URI`, `JWT_SECRET`, `GEMINI_API_KEY`, etc.).
+
+---
+
+## MongoDB Atlas Setup
+
+1. Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a Database User under **Database Access**.
+3. Allow access from anywhere (`0.0.0.0/0`) under **Network Access**.
+4. Obtain the connection string under **Connect > Drivers** and set `MONGO_URI` in `backend/.env`.
+
+---
+
+## Google OAuth Setup
+
+1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a project and configure the OAuth Consent Screen.
+3. Create **OAuth 2.0 Client IDs** (Web application).
+4. Add Authorized Redirect URIs:
+   - Development: `http://localhost:5001/api/auth/google/callback`
+   - Production: `https://your-backend.onrender.com/api/auth/google/callback`
+5. Copy Client ID & Secret into `backend/.env`.
+
+---
+
+## Gemini API Setup
+
+1. Go to [Google AI Studio](https://aistudio.google.com/).
+2. Generate an API Key.
+3. Assign key to `GEMINI_API_KEY` in `backend/.env`.
+
+---
+
+## Running Locally
+
+Run backend and frontend simultaneously in separate terminals:
 
 ```bash
-npm install
+# Terminal 1: Backend
+cd backend
+npm run dev
+
+# Terminal 2: Frontend
 npm run dev
 ```
 
-On successful start you will see:
-```
-MongoDB connected successfully
-SmartStay AI backend running at http://localhost:5001
-```
+- Frontend runs at: `http://localhost:5173`
+- Backend runs at: `http://localhost:5001`
 
-> Both servers must be running for the Dashboard to display live review data.
+---
+
+## Production Deployment
+
+### Frontend (Vercel)
+1. Push repository to GitHub.
+2. Import repository in [Vercel](https://vercel.com).
+3. Set Environment Variable:
+   - `VITE_API_URL` = `https://your-backend.onrender.com`
+4. Deploy. `vercel.json` will automatically manage client-side SPA routing.
+
+### Backend (Render)
+1. Create a **Web Service** in [Render](https://render.com).
+2. Set Root Directory: `backend`
+3. Build Command: `npm install`
+4. Start Command: `node server.js`
+5. Set environment variables (`PORT`, `MONGO_URI`, `JWT_SECRET`, `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `CLIENT_URL`).
 
 ---
 
 ## API Endpoints
 
-Base URL: `http://localhost:5001`
+### Authentication
+- `POST /api/auth/register` — Register new user
+- `POST /api/auth/login` — Login user & obtain JWT
+- `GET /api/auth/google` — Initiate Google OAuth login
+- `GET /api/auth/google/callback` — Google OAuth callback
 
-| # | Method | Endpoint                   | Description                                    | Status |
-|---|--------|----------------------------|------------------------------------------------|--------|
-| 1 | GET    | `/api/reviews`             | Return all reviews                             | 200    |
-| 2 | GET    | `/api/reviews/:id`         | Return a single review by ID                   | 200    |
-| 3 | POST   | `/api/reviews`             | Create a new review                            | 201    |
-| 4 | PUT    | `/api/reviews/:id`         | Update an existing review by ID                | 200    |
-| 5 | DELETE | `/api/reviews/:id`         | Delete a review by ID                          | 204    |
-| 6 | GET    | `/api/reviews/search?q=`   | Search by guest name, hotel, or review text    | 200    |
-| 7 | POST   | `/api/ai/analyze-review`   | Analyze review with Google Gemini API          | 200    |
+### Guest Reviews (Protected)
+- `GET /api/reviews` — Get all guest reviews
+- `POST /api/reviews` — Create a new guest review
+- `PUT /api/reviews/:id` — Update guest review
+- `DELETE /api/reviews/:id` — Delete guest review
+- `GET /api/reviews/search?q=:query` — Search reviews
 
-### Review Shape
-
-```json
-{
-  "id": "string (MongoDB ObjectId)",
-  "guestName": "string",
-  "hotel": "string",
-  "rating": 1,
-  "review": "string",
-  "sentiment": "positive | neutral | negative",
-  "date": "ISO 8601 string"
-}
-```
-
-### Error Responses
-
-```json
-{ "success": false, "error": "Descriptive error message." }
-```
-
-| Status | Meaning          |
-|--------|------------------|
-| 400    | Validation error |
-| 404    | Not found        |
-| 500    | Server error     |
+### AI Analysis (Protected)
+- `POST /api/ai/analyze-review` — Analyze guest review text using Gemini API
 
 ---
 
-## Tech Stack
+## Authentication
 
-| Layer     | Technology                    |
-|-----------|-------------------------------|
-| Frontend  | React 19, Tailwind CSS 4      |
-| Routing   | React Router DOM 7            |
-| Build     | Vite 8                        |
-| Backend   | Node.js, Express 4            |
-| Database  | MongoDB Atlas + Mongoose 8    |
-| CORS      | cors                          |
-| Config    | dotenv                        |
-| Dev       | nodemon                       |
+Authentication is managed via JSON Web Tokens (JWT). Upon successful login or Google OAuth flow completion, the server issues a signed JWT token valid for 30 days. The client includes this token in the `Authorization: Bearer <token>` header for all protected API calls.
 
 ---
 
-## AI Review Analyzer Feature
-The AI Review Analyzer is integrated to help hotel managers process guest feedback efficiently:
-1. **Request Flow**: Authenticated managers input guest review text in the `/ai-review` dashboard page.
-2. **API Delegation**: The React frontend sends a secure request containing the review to the Express backend. The backend loads the `GEMINI_API_KEY` environment variable and issues a request to the Google Gemini API (`gemini-1.5-flash`).
-3. **Structured Response**: The backend instructs Gemini to structure the response under a strict JSON schema.
-4. **Interactive Output**: The frontend parses the resulting JSON and renders:
-   - **Sentiment Tag**: Positive, Neutral, or Negative (color-coded).
-   - **Priority Status**: Low, Medium, or High. High priority highlights safety concerns or severe service complaints.
-   - **Summary**: A concise 2-3 sentence overview.
-   - **Key Issues**: Specific problems mapped out as badges.
-   - **Suggested response**: A polished, ready-to-copy professional management response.
+## AI Review Analyzer
+
+The AI Review Analyzer sends review text to Google Gemini 2.5 Flash model with strict JSON schema definitions. It generates structured output containing:
+1. `sentiment`: Positive / Neutral / Negative
+2. `summary`: Executive summary of guest comments
+3. `keyIssues`: Extracted complaint or highlight tags
+4. `priority`: High / Medium / Low urgency classification
+5. `hotelResponse`: Customized professional response draft
 
 ---
 
-## Week Notes
+## Future Improvements
 
-- **Week 4** — In-memory array, full CRUD REST API, frontend connected to live API
-- **Week 5** — Replaced in-memory array with MongoDB Atlas. All API routes, response formats, and frontend UI remain unchanged. Data now persists across server restarts.
-- **Week 7** — Integrated Google Gemini API to analyze guest reviews and generate structured JSON responses. Added the protected frontend `/ai-review` page with responsive cards, loading feedback, and copy-to-clipboard actions.
+- Multi-property hotel filter in Dashboard.
+- Automated email notification for High-priority negative reviews.
+- Export review analytics reports as PDF / CSV.
+- Real-time review synchronization via WebSockets.

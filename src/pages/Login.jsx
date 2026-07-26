@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Button, Input, Toast } from '../components/ui'
 import { useAuth } from '../context/AuthContext.jsx'
+import { API_BASE_URL } from '../config/api.js'
 
 function Login() {
   const navigate  = useNavigate()
@@ -33,7 +34,7 @@ function Login() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -54,7 +55,7 @@ function Login() {
   }
 
   function handleGoogleLogin() {
-    window.location.href = 'http://localhost:5001/api/auth/google'
+    window.location.href = `${API_BASE_URL}/api/auth/google`
   }
 
   return (

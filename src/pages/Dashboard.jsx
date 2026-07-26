@@ -4,8 +4,9 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Loader, Toast, Button, Input, Modal } from '../components/ui'
 import { useAuth } from '../context/AuthContext.jsx'
+import { API_BASE_URL } from '../config/api.js'
 
-const API_BASE = '/api'
+const API_BASE = `${API_BASE_URL}/api`
 
 const EMPTY_FORM = {
   guestName: '',

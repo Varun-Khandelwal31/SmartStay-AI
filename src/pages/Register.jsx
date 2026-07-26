@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Button, Input, Toast } from '../components/ui'
+import { API_BASE_URL } from '../config/api.js'
 
 function Register() {
   const navigate = useNavigate()
@@ -34,7 +35,7 @@ function Register() {
     if (Object.keys(errs).length > 0) { setErrors(errs); return }
     setLoading(true)
     try {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
@@ -55,7 +56,7 @@ function Register() {
   }
 
   function handleGoogleLogin() {
-    window.location.href = 'http://localhost:5001/api/auth/google'
+    window.location.href = `${API_BASE_URL}/api/auth/google`
   }
 
   function set(field) {

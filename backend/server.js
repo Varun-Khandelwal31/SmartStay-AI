@@ -14,7 +14,24 @@ const app  = express()
 const PORT = process.env.PORT || 5001
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-app.use(cors({ origin: true, credentials: true }))
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean)
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (server-to-server, Postman, curl)
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return callback(null, true)
+      // In development fall through to allow all
+      if (process.env.NODE_ENV !== 'production') return callback(null, true)
+      callback(new Error(`CORS: ${origin} not allowed`))
+    },
+    credentials: true,
+  }),
+)
 
 // ─── Body parsing ─────────────────────────────────────────────────────────────
 app.use(express.json())
@@ -46,7 +63,7 @@ mongoose
   .then(() => {
     console.log('MongoDB connected successfully')
     app.listen(PORT, () => {
-      console.log(`SmartStay AI backend running at http://localhost:${PORT}`)
+      console.log(`SmartStay AI backend running on port ${PORT}`)
     })
   })
   .catch((err) => {

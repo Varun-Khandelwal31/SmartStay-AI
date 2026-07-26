@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar.jsx'
 import Footer from '../components/Footer.jsx'
 import { Loader, Toast, Button } from '../components/ui'
 import { useAuth } from '../context/AuthContext.jsx'
+import { API_BASE_URL } from '../config/api.js'
 
 const sentimentColors = {
   Positive: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800',
@@ -37,7 +38,7 @@ function AIReview() {
     setResult(null)
 
     try {
-      const res = await fetch('/api/ai/analyze-review', {
+      const res = await fetch(`${API_BASE_URL}/api/ai/analyze-review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
